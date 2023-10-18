@@ -25,36 +25,49 @@ public type AuditConfig record {|
 // http://hl7.org/fhir/R4/auditevent.html
 public type InternalAuditEvent record {|
     // Value Set http://hl7.org/fhir/ValueSet/audit-event-type
+    // FHIR AuditEvent.type.code
     string typeCode;
-    // Value Set http://hl7.org/fhir/ValueSet/audit-event-sub-type 
+    // Value Set http://hl7.org/fhir/ValueSet/audit-event-sub-type
+    // FHIR AuditEvent.subtype.code
     string subTypeCode;
     // Value Set http://hl7.org/fhir/ValueSet/audit-event-action
+    // FHIR AuditEvent.action
     string actionCode;
-    // Value Set http://hl7.org/fhir/ValueSet/audit-event-outcome 
+    // Value Set http://hl7.org/fhir/ValueSet/audit-event-outcome
+    // FHIR AuditEvent.outcome
     string outcomeCode;
+    // FHIR AuditEvent.recorded
     string recordedTime;
     // actor involved in the event
     // Value Set http://hl7.org/fhir/ValueSet/participation-role-type
+    // FHIR AuditEvent.agent.type.coding.code
     string agentType;
+    // FHIR AuditEvent.agent.who.display
     string agentName;
+    // FHIR AuditEvent.agent.requestor
     boolean agentIsRequestor;
     // source of the event
+    // FHIR AuditEvent.source.observer.display
     string sourceObserverName;
     // Value Set http://hl7.org/fhir/ValueSet/audit-source-type
+    // FHIR AuditEvent.source.observer.type
     string sourceObserverType;
     // Value Set http://hl7.org/fhir/ValueSet/audit-entity-type
+    // FHIR AuditEvent.entity.type.coding.code
     string entityType;
     // Value Set http://hl7.org/fhir/ValueSet/object-role
+    // FHIR AuditEvent.entity.role.coding.code
     string entityRole;
     // Requested relative path - eg.: "Patient/example/_history/1"
+    // FHIR AuditEvent.entity.what.reference
     string entityWhatReference;
 
 |};
 
-# Call audit service and handle response.
-# @param auditConfig configuration for audit event.
-# @param fhirContext context of the request.
-# @return FHIRError if audit service call fails.
+// Call audit service and handle response.
+// @param auditConfig configuration for audit event.
+// @param fhirContext context of the request.
+// @return FHIRError if audit service call fails.
 public isolated function handleAuditEvent(AuditConfig auditConfig, FHIRContext fhirContext) returns FHIRError? {
     FHIRUser? user = fhirContext.getFHIRUser();
     InternalAuditEvent auditEvent = {
@@ -75,16 +88,11 @@ public isolated function handleAuditEvent(AuditConfig auditConfig, FHIRContext f
 
     http:Client|http:ClientError auditClient = new (auditConfig.auditServiceUrl);
     if auditClient is http:ClientError {
-        return clientErrorToFhirError(auditClient)
-;
+        return clientErrorToFhirError(auditClient);
     } else {
-
         InternalAuditEvent|http:ClientError auditRes = auditClient->post("/audits", auditEvent);
         if auditRes is http:ClientError {
-            return clientErrorToFhirError(auditRes)
-;
-        } else {
-            // todo handle error
+            return clientErrorToFhirError(auditRes);
         }
     }
 }
