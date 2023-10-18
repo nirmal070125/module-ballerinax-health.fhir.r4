@@ -16,58 +16,51 @@
 import ballerina/http;
 import ballerina/time;
 
+# Audit service integration related configuration.
+#
+# + enabled - enable or disable integration with audit service
+# + auditServiceUrl - url of the audit service
 public type AuditConfig record {|
     boolean enabled = false;
     string auditServiceUrl;
 |};
 
-// Holds the information needed to form an audit event based on the FHIR AuditEvent resource
-// http://hl7.org/fhir/R4/auditevent.html
+# Flattened version of the FHIR AuditEvent (http://hl7.org/fhir/R4/auditevent.html).
+#
+# + typeCode - FHIR AuditEvent.type.code (Value Set http://hl7.org/fhir/ValueSet/audit-event-type)
+# + subTypeCode - FHIR AuditEvent.subtype.code (Value Set http://hl7.org/fhir/ValueSet/audit-event-sub-type)
+# + actionCode - FHIR AuditEvent.action (Value Set http://hl7.org/fhir/ValueSet/audit-event-action)
+# + outcomeCode - FHIR AuditEvent.outcome (Value Set http://hl7.org/fhir/ValueSet/audit-event-outcome)
+# + recordedTime - FHIR AuditEvent.recorded
+# + agentType - FHIR AuditEvent.agent.type.coding.code (Value Set http://hl7.org/fhir/ValueSet/participation-role-type)
+# + agentName - FHIR AuditEvent.agent.who.display
+# + agentIsRequestor - FHIR AuditEvent.agent.requestor
+# + sourceObserverName - FHIR AuditEvent.source.observer.display
+# + sourceObserverType - FHIR AuditEvent.source.observer.type (Value Set http://hl7.org/fhir/ValueSet/audit-source-type)
+# + entityType - FHIR AuditEvent.entity.type.coding.code (Value Set http://hl7.org/fhir/ValueSet/audit-entity-type)
+# + entityRole - FHIR AuditEvent.entity.role.coding.code (Value Set http://hl7.org/fhir/ValueSet/object-role)
+# + entityWhatReference - FHIR AuditEvent.entity.what.reference (Requested relative path - eg.: "Patient/example/_history/1")
 public type InternalAuditEvent record {|
-    // Value Set http://hl7.org/fhir/ValueSet/audit-event-type
-    // FHIR AuditEvent.type.code
     string typeCode;
-    // Value Set http://hl7.org/fhir/ValueSet/audit-event-sub-type
-    // FHIR AuditEvent.subtype.code
     string subTypeCode;
-    // Value Set http://hl7.org/fhir/ValueSet/audit-event-action
-    // FHIR AuditEvent.action
     string actionCode;
-    // Value Set http://hl7.org/fhir/ValueSet/audit-event-outcome
-    // FHIR AuditEvent.outcome
     string outcomeCode;
-    // FHIR AuditEvent.recorded
     string recordedTime;
-    // actor involved in the event
-    // Value Set http://hl7.org/fhir/ValueSet/participation-role-type
-    // FHIR AuditEvent.agent.type.coding.code
     string agentType;
-    // FHIR AuditEvent.agent.who.display
     string agentName;
-    // FHIR AuditEvent.agent.requestor
     boolean agentIsRequestor;
-    // source of the event
-    // FHIR AuditEvent.source.observer.display
     string sourceObserverName;
-    // Value Set http://hl7.org/fhir/ValueSet/audit-source-type
-    // FHIR AuditEvent.source.observer.type
     string sourceObserverType;
-    // Value Set http://hl7.org/fhir/ValueSet/audit-entity-type
-    // FHIR AuditEvent.entity.type.coding.code
     string entityType;
-    // Value Set http://hl7.org/fhir/ValueSet/object-role
-    // FHIR AuditEvent.entity.role.coding.code
     string entityRole;
-    // Requested relative path - eg.: "Patient/example/_history/1"
-    // FHIR AuditEvent.entity.what.reference
     string entityWhatReference;
-
 |};
 
-// Call audit service and handle response.
-// @param auditConfig configuration for audit event.
-// @param fhirContext context of the request.
-// @return FHIRError if audit service call fails.
+# Call audit service and handle response.
+#
+# + auditConfig - configuration for audit event
+# + fhirContext - context of the request
+# + return - FHIRError if audit service call fails
 public isolated function handleAuditEvent(AuditConfig auditConfig, FHIRContext fhirContext) returns FHIRError? {
     FHIRUser? user = fhirContext.getFHIRUser();
     InternalAuditEvent auditEvent = {
@@ -76,10 +69,10 @@ public isolated function handleAuditEvent(AuditConfig auditConfig, FHIRContext f
         actionCode: getAction(fhirContext.getInteraction().interaction),
         outcomeCode: fhirContext.isInErrorState() ? "8" : "0",
         recordedTime: time:utcToString(time:utcNow()),
-        agentType: "humanuser",
+        agentType: "",
         agentName: user == () ? "Unknown" : (<FHIRUser>user).userID,
         agentIsRequestor: true,
-        sourceObserverName: "myfhirserver.com",
+        sourceObserverName: "",
         sourceObserverType: "3",
         entityType: "2",
         entityRole: "1",
